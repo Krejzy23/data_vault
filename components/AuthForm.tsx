@@ -18,29 +18,54 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import Link from "next/link";
-
-const formSchema = z.object({
-  username: z.string().min(2).max(50),
-});
+import { createAccount, signInUser } from "@/actions/user.actions";
+import OtpModal from "./OTPModal";
 
 type FormType = "sign-in" | "sign-up";
+
+const authFormSchema = (formType: FormType) => {
+  return z.object({
+    email: z.string().email(),
+    fullName:
+      formType === "sign-up"
+        ? z.string().min(2).max(50)
+        : z.string().optional(),
+  });
+};
 
 const AuthForm = ({ type }: { type: FormType }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  // 1. Define your form.
+  const [accountId, setAccountId] = useState(null);
+
+  const formSchema = authFormSchema(type);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
+      fullName: "",
+      email: "",
     },
   });
 
-  // 2. Define a submit handler.
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      const user =
+        type === "sign-up"
+          ? await createAccount({
+              fullName: values.fullName || "",
+              email: values.email,
+            })
+          : await signInUser({ email: values.email });
+
+      setAccountId(user.accountId);
+    } catch {
+      setErrorMessage("Failed to create account. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,55 +76,56 @@ const AuthForm = ({ type }: { type: FormType }) => {
             {type === "sign-in" ? "Sign In" : "Sign Up"}
           </h1>
           {type === "sign-up" && (
-            <>
-              <FormField
-                control={form.control}
-                name="fullName"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="shad-form-item">
-                      <FormLabel className="shad-form-label">
-                        Full Name
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter your full name"
-                          {...field}
-                          className="shad-input"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage className="shad-form-message" />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="shad-form-item">
+                    <FormLabel className="shad-form-label">Full Name</FormLabel>
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="shad-form-item">
-                      <FormLabel className="shad-form-label">Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter your email"
-                          {...field}
-                          className="shad-input"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage className="shad-form-message" />
-                  </FormItem>
-                )}
-              />
-            </>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your full name"
+                        className="shad-input"
+                        {...field}
+                      />
+                    </FormControl>
+                  </div>
+
+                  <FormMessage className="shad-form-message" />
+                </FormItem>
+              )}
+            />
           )}
-          <Button 
-            type="submit" 
+
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <div className="shad-form-item">
+                  <FormLabel className="shad-form-label">Email</FormLabel>
+
+                  <FormControl>
+                    <Input
+                      placeholder="Enter your email"
+                      className="shad-input"
+                      {...field}
+                    />
+                  </FormControl>
+                </div>
+
+                <FormMessage className="shad-form-message" />
+              </FormItem>
+            )}
+          />
+
+          <Button
+            type="submit"
             className="form-submit-button"
             disabled={isLoading}
-            >
+          >
             {type === "sign-in" ? "Sign In" : "Sign Up"}
 
             {isLoading && (
@@ -108,7 +134,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
                 alt="loader"
                 width={24}
                 height={24}
-                className="animate-spin ml-2"
+                className="ml-2 animate-spin"
               />
             )}
           </Button>
@@ -129,9 +155,11 @@ const AuthForm = ({ type }: { type: FormType }) => {
               {type === "sign-in" ? "Sign Up" : "Sign In"}
             </Link>
           </div>
-
         </form>
       </Form>
+      {accountId && (
+        <OtpModal email={form.getValues("email")} accountId={accountId} />
+      )}
     </>
   );
 };
