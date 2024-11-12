@@ -1,16 +1,22 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Button } from "./ui/button";
-import Search from "./Search";
-import FileUploader from "./FileUploader";
-import { signOutUser } from "@/actions/user.actions";
+import Search from "@/components/Search";
+import FileUploader from "@/components/FileUploader";
+import { signOutUser } from "@/lib/actions/user.actions";
 
-const Header = () => {
+const Header = ({
+  userId,
+  accountId,
+}: {
+  userId: string;
+  accountId: string;
+}) => {
   return (
     <header className="header">
       <Search />
       <div className="header-wrapper">
-        <FileUploader />
+        <FileUploader ownerId={userId} accountId={accountId} />
         <form
           action={async () => {
             "use server";
@@ -32,5 +38,4 @@ const Header = () => {
     </header>
   );
 };
-
 export default Header;

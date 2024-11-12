@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/input-otp";
 import Image from "next/image";
 import { Button } from "./ui/button";
-import { sendEmailOTP, verifySecret } from "@/actions/user.actions";
+import { sendEmailOTP, verifySecret } from "@/lib/actions/user.actions";
 import { useRouter } from "next/navigation";
 
 const OtpModal = ({

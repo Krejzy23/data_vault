@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import { getCurrentUser } from "@/actions/user.actions";
+import { getCurrentUser } from "@/lib/actions/user.actions";
 import MobileNavigation from "@/components/MobileNavigation";
 import Sidebar from "@/components/Sidebar";
 import { redirect } from "next/navigation"
@@ -14,7 +14,7 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
       <Sidebar {...currentUser}/>
       <section className="flex flex-1 flex-col h-full ">
         <MobileNavigation {...currentUser}/>
-        <Header />
+        <Header userId={currentUser.$id} accountId={currentUser.accountId}/>
         <div className="main-content">{children}</div>
       </section>
     </main>
